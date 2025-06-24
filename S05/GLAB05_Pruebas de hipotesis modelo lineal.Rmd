@@ -40,11 +40,13 @@ library(readxl)
 4. Para leer la primera hoja, usamos la función read_excel() y colocando como parámetro "sheet="Hoja1”. Usamos la función “as.data.frame()" para mostrarlo como un data frame clásico.
 
 ```{r data}
-data = read_excel("canes.xlsx", sheet="Hoja1")
+#Creación de vectores para las variables X (Tamaño de la oferta) y Y (Precio por acción)
+compania <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+tamanio <- c(9.0, 94.4, 27.3, 179.2, 71.9, 97.9, 93.5, 70.0, 160.7, 96.5, 83.0, 23.5, 58.7, 93.8, 34.4)
+precio <- c(10.8, 11.3, 11.2, 11.1, 11.1, 11.2, 11.0, 10.7, 11.3, 10.6, 10.5, 10.3, 10.7, 11.0, 10.8)
 
-data = data[-1]
-data = as.data.frame(data)
-data
+# Creación de un data frame con los datos
+data <- data.frame(compania, tamanio, precio)
 ```
 
 ## Análisis de regresión
@@ -52,8 +54,8 @@ data
 5. Vamos a realizar ahora un análisis de regresión lineal simple asignando la variable independiente (‘data$Peso’) y la dependiente (‘data$Consumo’) de la data. Luego utlilizaremos la función lm() escribiendo primero la variable dependiente y después la independiente. Podemos mostrar un gráfico de dispersión junto con la recta de regresión.
 
 ```{r ecuación de regresión}
-x = data$Peso
-y = data$Consumo
+x = data$tamanio
+y = data$precio
 
 modelo = lm(y ~ x)
 
@@ -147,5 +149,15 @@ El p-value = 0.4581. Ya que es mayor que 0.05 entonces se acepta la Ho de que lo
 
 plot(x = modelo, which = 3)
 
+```
+```{r}
+
+  library(car)
+
+# Calcular VIF
+vif_result <- vif(modelo)
+
+# Ver el VIF de cada variable
+print(vif_result)
 ```
 

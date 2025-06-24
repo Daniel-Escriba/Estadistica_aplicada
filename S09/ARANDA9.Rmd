@@ -1,0 +1,270 @@
+---
+title: "LAB 9"
+author: "ARANDA"
+date: "2025-05-16"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+
+#SEMANA 9: Prueba de hipótesis para validar un modelo multilineal.
+
+###1 Situacion presentada:
+###El Times-Observer es un periódico en la ciudad Metro. Al igual que muchos periódicos en la ciudad, el Times-Observer pasa por dificultades financieras. La gerente de circulación estudia otros periódicos en ciudades similares en Estados Unidos y Canadá, con interés particular en las variables que se relacionan con el número de suscriptores. Esta reúne la informacion muestral de 25 periódicos en ciudades similares empleando la siguiente notación:
+
+```{r}
+#Suscriptores: Número de suscriptores (en miles)
+#Población: Población metropolitana (en miles)
+#Presupuesto: Presupuesto en publicidad del periódico (en miles de dólares)
+#Ingreso: Ingreso familiar medio en el área metropolitana (en miles de dólares)
+#Deseando predecir el número de suscriptores con base a las otras variables, haga lo siguiente:
+
+# a.Lea la base de datos y haga un análisis de regresión múltiple. Además, escriba la ecuación de regresión.
+# Leyendo la base de datos
+
+
+```
+
+```{r}
+library(readxl)
+library(pander)
+library(equatiomatic)
+
+data = read_excel("periódicos.xlsx", sheet="Hoja1")
+data = data[-1]
+data = as.data.frame(data)
+
+# Usar pander para formatear la tabla
+pander(data, caption = "Tabla de datos de suscripciones a periodicos de USA y Canada")
+```
+
+
+```{r}
+#Ajuste del Modelo de regresión múltiple
+```
+
+```{r}
+model = lm(formula=Suscriptores~ Población + Presupuesto + Ingreso, data=data)
+summary(model)
+```
+```{r}
+#Extraemos los coeficientes
+
+
+model$coefficients
+
+```
+
+```{r}
+#Escribiendo la ecuación de regresión
+#𝛽0𝛽1𝛽2𝛽3=−5.732813186=0.007536582=0.050883394=1.097380777
+
+# Suscriptores=(−5.732813186)+0.007536582⋅Población+0.050883394⋅Presupuesto+(1.097380777)⋅Ingreso
+
+```
+
+```{r}
+#b.Verifique los supuestos de linealidad e independencia y diga si se aceptan o rechazan las hipótesis nula Ho.
+```
+
+
+```{r}
+cor.test(data$Suscriptores,data$Población)
+
+```
+
+
+```{r}
+#El p-value = 0.0005271 < 0.05. Entonces, al 5% de significancia estadistica se rechaza la Ho de que No existe correlacion entre Suscriptores y Población. Es decir, se acepta la hipotesis alternativa H1 de que existe correlacion.
+```
+```{r}
+cor.test(data$Suscriptores,data$Presupuesto)
+
+```
+
+
+```{r}
+#El p-value = 7.208e-05 < 0.05. Entonces, al 5% de significancia estadistica se rechaza la Ho de que No existe correlacion entre Suscriptores y Presupuesto. Es decir, se acepta la hipotesis alternativa H1 de que existe correlacion.
+
+
+```
+
+
+```{r}
+cor.test(data$Suscriptores,data$ Ingreso)
+
+```
+
+
+```{r}
+#El p-value = 7.016e-05 < 0.05 Entonces, al 5% de significancia estadistica se rechaza la Ho de que No existe correlacion entre Suscriptores e Ingreso. Es decir, se acepta la hipotesis alternativa H1 de que existe correlacion.
+
+```
+
+```{r}
+library(GGally)
+
+ggpairs(data, lower=list (continuous="smooth"),
+diag=list (continuous="barDiag"), axisLabe1s="none")
+```
+
+
+```{r}
+#Independencia
+
+```
+
+
+```{r}
+library(lmtest)
+dwtest(model)
+```
+
+
+```{r}
+#El p-value = 0.7468 > 0.05. Entonces, al 5% de significancia estadistica, NO se rechaza la hipotesis nula Ho, de que No existe autocorrelacion. Es decir, NO existe autocorrelacion entre los residuos.
+```
+
+```{r}
+#Grafico de los residuos
+```
+
+```{r}
+plot(model$residuals)
+
+```
+
+
+```{r}
+#Interpretacion:El gráfico de residuos muestra que están bien distribuidos y no presentan patrones, lo que indica que los errores son independientes. No hay tendencias ni agrupamientos que sugieran problemas, aunque algunos puntos extremos podrían ser valores atípicos. En general, la aleatoriedad de los residuos sugiere que el modelo es adecuado en cuanto a la independencia de los errores.
+```
+
+```{r}
+#c.Verifique los supuestos de normalidad y homocedasticidad y diga si se aceptan o rechazan las hipótesis nula Ho.
+```
+
+
+```{r}
+#Normalidad
+```
+
+```{r}
+shapiro.test(model$residuals)
+
+```
+
+
+```{r}
+#El p-value = 0.964 > 0.05. Entonces, al 5% de significancia estadistica, NO se rechaza la hipotesis nula Ho, de que los residuos se distribuyen normalmente. Es decir, los residuos siguen una distribuyen normal.
+```
+
+```{r}
+#Gráfico Q-Q
+```
+
+```{r}
+plot(model, 2)
+
+```
+```{r}
+#Interpretacion:El gráfico Q-Q de residuos muestra que la mayoría se alinean con la línea diagonal, lo que sugiere una distribución normal. Sin embargo, hay algunas observaciones (8, 17 y 16) que se desvían, indicando posibles valores atípicos. En general, la normalidad de los residuos es aceptable, aunque hay ligeras desviaciones en los extremos que merecen ser investigadas.
+```
+
+```{r}
+#Varianza constante(homocedasticidad)
+```
+
+```{r}
+library(lmtest)
+
+bptest(model)
+```
+```{r}
+#El p-value = 0.3327 > 0.05. Entonces, al 5% de significancia estadistica, NO se rechaza la hipotesis nula Ho, de que los residuos tienen varianza constante.Es decir, los residuos poseen una varianza constante.
+```
+
+```{r}
+#Grafico de los residuos
+```
+
+```{r}
+plot(model, 1)
+
+```
+
+```{r}
+#Interpretacion:El gráfico de residuos frente a valores ajustados muestra una distribución aleatoria de los residuos alrededor de cero, lo que indica que no hay patrones sistemáticos y sugiere que el modelo lineal es adecuado. Sin embargo, hay algunos puntos (8, 16 y 17) que se desvían, lo que puede señalar valores atípicos que necesitan más análisis. En general, la línea de suavizado (en rojo) se mantiene bastante plana, apoyando la homocedasticidad de los residuos.
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

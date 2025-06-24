@@ -1,0 +1,248 @@
+---
+title: 'LAB10 : PRUEBA GLOBAL DEL MODELO MULTILINEAL. PRUEBA INDIVIDUAL PARA LOS COEFICIENTES. INTERVALO DE CONFIANZA PARA LOS PARÁMETROS'
+author: "Aranda Huerta, Milene & Escriba Flores Daniel"
+date: "2025-05-21"
+geometry: margin=1in
+documentclass: article
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 3
+    number_sections: true
+  html_document:
+    toc: true
+    theme: flatly
+    highlight: textmate
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+  '': default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+---
+
+# Caso Practico
+
+Frank Castle desea ampliar sus negocios a otras ciudades como Arequipa, Cusco, Trujillo y Piura. Para preparar su presentación al banco local, le gustaría comprender mejor los factores que hacenque una tienda de descuento en particular sea productiva. Este debe hacer todo el trabajo por cuenta propia, por lo que no será capaz de estudiar todas las tiendas de descuento. Por tanto, selecciona una muestra aleatoria de 15 tiendas y registra las ventas diarias promedio, el espacio de piso (área), el número de cajones de estacionamiento y el ingreso medio de las familias en la
+región por cada una de las tiendas.
+
+Deseando predecir las ventas diarias promedio con base a las otras variables, haga lo siguiente:
+
+# Pregunta 1: Lectura - Regresion
+
+**a. Lea la base de datos y haga un análisis de regresión múltiple. Además, escriba la ecuación de regresión.**
+
+## Lectura de Datos
+
+```{r Data, warning=FALSE}
+
+library(readxl)
+library(pander)
+library(equatiomatic)
+
+data = read_excel("tiendas.xlsx", sheet="ventas")
+data = data[-1]
+data = as.data.frame(data)
+
+# Usar pander para formatear la tabla
+pander(data, caption = "Tabla de ventas diarias promedio, area de
+       tienda, cajones de estacionamiento e ingreso de familias")
+```
+
+## Analisis de regresión multiple
+
+Para llevar a cabo la regresión múltiple utilizamos la funcion lm() escribiendo primero la variable dependiente y luego las independientes
+
+```{r modelo} 
+modelo = lm(formula= ventas ~ area + 
+                              cajones + 
+                              ingreso, 
+                              data=data)
+
+modelo$coefficients
+```
+
+## Ecuacion de la regresión
+
+```{r, echo=FALSE}
+cat("Ecuación de regresión:\n")
+cat("Ventas =", coef(modelo)[1], "+", coef(modelo)[2], "* Población +", 
+    coef(modelo)[3], "* Presupuesto +", coef(modelo)[4], "* Ingreso\n")
+```
+
+```{r}
+# Versión básica
+extract_eq(modelo)
+```
+
+```{r}
+# Versión con valores de coeficientes
+extract_eq(modelo, use_coefs = TRUE, coef_digits = 5)
+
+```
+
+# Pregunta 2: Prueba Global e individual - Intervalo de Confianza
+
+**b. Aplique la prueba global e individual para los coeficientes y construya intervalos de confianza para los mismos con un 96% de confiabilidad. Interprete los resultados obtenidos.**
+
+La función summary() nos permite obtener los resultados del estadístico F para la prueba global y los estadístico t para las pruebas individuales. 
+
+Para la prueba global, si el p-valor es menor a 0.05, se debe rechazar la hipótesis nula Ho de que todos los coeficientes de la regresión son ceros y en caso contrario aceptar Ho. 
+
+Asimismo, para la prueba individual, si el p-valor asociado a un coeficiente es menor a 0.05, se debe rechazar la hipótesis nula Ha de que el coeficiente de la regresión es cero y en caso contrario aceptar Ho.
+
+
+## Prueba Global e individual 
+
+```{r }
+resumen = summary(modelo)
+resumen
+```
+```{r}
+
+# Estadístico F calculado
+F_calculado <- resumen$fstatistic[1]
+F_calculado
+
+```
+```{r}
+# Nivel de confianza: 96% (alfa = 0.04)
+F_critico <- qf(0.96, 3, 11)
+print(F_critico)
+
+```
+
+### Interpretación de la prueba global:
+
+F calculado: 18.6
+F crítico (96%): 3.91
+p-valor: 0.0001285
+
+Como el F calculado (18.6) es mayor que el F crítico (3.91), rechazamos la hipótesis nula con un 96% de confianza de que todos los Betas son iguales a 0. Esto significa que el modelo en su conjunto es estadísticamente significativo y al menos uno de los predictores (área, cajones o ingreso) tiene un efecto significativo sobre las ventas. Asimismo, el p-valor muy pequeño (0.0001285) confirma esta conclusión.
+
+### Pruebas Individuales (t)
+
+- Intercepto:
+
+  p-valor: 1.48e-07 (0.000000148)
+  Como p-valor (1.48e-07) < 0.04, rechazamos la hipótesis nula.
+  El intercepto es estadísticamente significativo con un 96% de confianza.
+
+- Área (0.7315):
+
+  p-valor: 0.000933
+  Como p-valor (0.000933) < 0.04, rechazamos la hipótesis nula.
+  El coeficiente de área es estadísticamente significativo con un 96% de confianza.
+
+- Cajones (9.9915):
+
+  p-valor: 0.002733
+  Como p-valor (0.002733) < 0.04, rechazamos la hipótesis nula.
+  El coeficiente de cajones es estadísticamente significativo con un 96% de confianza.
+
+- Ingreso (-2.3083):
+
+  p-valor: 0.175655
+  Como p-valor (0.175655) > 0.04, no rechazamos la hipótesis nula.
+  El coeficiente de ingreso no es estadísticamente significativo con un 96% de confianza.
+
+## Intervalo de Confianza
+
+Para encontrar los intervalos de confianza para el intercepto y los parámetros del modelo de regresión múltiple poblacional, usamos la función confint(), ingresando como parámetros el modelo y el nivel de confianza. Si alguno de los intervalos contiene al cero (0), este no es significativo para el modelo y por tanto se puede excluir del mismo.
+
+```{r}
+intervalos <- confint(modelo, level = 0.96)
+print(intervalos)
+```
+
+### Interpretación de los intervalos de confianza
+Al examinar estos intervalos de confianza del 96%:
+
+- Intercepto: [1186.59, 1774.90]
+
+  No contiene el cero
+  El intercepto es estadísticamente significativo con un 96% de confianza
+
+- Área: [0.35, 1.11]
+
+  No contiene el cero
+  El coeficiente de área es estadísticamente significativo
+  Con 96% de confianza, por cada unidad de aumento en el área, las ventas aumentan entre 0.35 y 1.11 unidades
+
+- Cajones: [3.93, 16.05]
+
+  No contiene el cero
+  El coeficiente de cajones es estadísticamente significativo
+  Con 96% de confianza, por cada cajón adicional, las ventas aumentan entre 3.93 y 16.05 unidades
+
+- Ingreso: [-6.02, 1.40]
+
+  Contiene el cero
+  El coeficiente de ingreso no es estadísticamente significativo
+  Como el intervalo incluye el cero, no podemos descartar la posibilidad de que el verdadero efecto del ingreso sea nulo, lo que sugiere que su influencia en las ventas no es relevante en este modelo y *podría ser excluida*.
+
+
+#Pregunta 3: Nuevo modelo - Pronostico 
+
+c. De acuerdo a lo anterior, genere un nuevo modelo de regresión para el cual todos los coeficientes sean significativos. Además, realice 10 pronósticos con las nuevas variables donde una tome valores por encima de su máximo y las otras sean constantes.
+
+## Nuevo modelo de regresion múltiple
+
+Excluyemos la variable  `Ingreso`
+
+```{r nuevo modelo}
+modelo_revisado <- lm(ventas ~ area + cajones, data = data)
+summary(modelo_revisado)
+```
+## Verificar que todos los coeficientes sean significativos
+
+```{r}
+# Verificar intervalos de confianza
+confint(modelo_revisado, level = 0.96)
+```
+
+### Interpretacion
+
+- Vemos que  todos los coedficeintes tienen el p-valor menor a 0.04 (para el nivel de confianza del 96%) y que sus intervalos de confianza no contienen el cero.
+
+## Pronósticos con las nuevas variables
+
+Para hacer el pronostico y cumplir con los criterios, elegiremos que haya 9 cajones de estacionamiento fijos y la area de los pisos sera 10 unidades mas del maximo. Asimismo, los siguiente valores iran en crecimiento de 10 en 10.
+
+```{r}
+# Obtener el valor máximo del área
+max_area <- max(data$area)
+
+# Crear 10 valores de área empezando desde el máximo y aumentando en incrementos de 10
+valores_area <- max_area + seq(10, 100, by = 10)
+
+# Crear conjunto de datos para pronósticos con cajones constante en 9
+datos_pronosticos <- data.frame(
+  area = valores_area,
+  cajones = rep(9, 10)  # Valor constante de 9 cajones
+)  
+
+# Obtener pronósticos
+pronosticos <- predict(modelo_revisado, newdata = datos_pronosticos)
+
+# Crear tabla de resultados
+tabla_pronosticos <- data.frame(
+  Cajones = datos_pronosticos$cajones,
+  Area = datos_pronosticos$area,
+  Ventas_Pronosticadas = pronosticos
+)
+
+# Mostrar la tabla de pronósticos
+
+pander(tabla_pronosticos, caption = "Tabla de Pronosticos con 9 cajones
+                                    de estacionamos y Area de piso ascendente")
+```
+
+# Conclusiones Finales
+
+El modelo final, basado únicamente en las variables significativas área y cajones, explica satisfactoriamente el comportamiento de las ventas. Al eliminar la variable ingreso (no significativa), se obtuvo un modelo más parsimonioso y robusto. Los pronósticos realizados demuestran que un incremento en el área de venta, manteniendo constante el número de cajones, genera un aumento proporcional en las ventas estimadas, lo que sugiere oportunidades de crecimiento mediante la expansión física del negocio.

@@ -1,0 +1,158 @@
+---
+title: "PRUEBA GLOBAL DEL MODELO MULTILINEAL. PRUEBA INDIVIDUAL PARA LOS COEFICIENTES. INTERVALO DE CONFIANZA PARA LOS PARÁMETROS"
+author: "EFN"
+date: "2023-04-26"
+output: 
+  html_document:
+    toc: true
+    theme: united
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## SEMANA 10
+
+## GUÍA DE LABORATORIO
+Revise junto con el docente el ejemplo de aplicacion para que luego pueda resolver el caso de aplicacion propuesto.
+
+EJEMPLO DE APLICACIÓN
+1. Primero creamos un archivo R Markdown, colocando un título y autor que irán en la cabecera.
+
+2. Procederemos a leer la base de datos llamada “calefaccion”, que contiene información sobre el costo de calefacción (en dólares) el cual se quiere predecir con base a la temperatura exterior diaria media (en °F), el número de pulgadas de aislamiento en el ático y la antigüedad en años del calentador para un grupo de casas puestas en venta en una ciudad de Estados Unidos. 
+
+Se trabajará con un documento de Excel. Para ello se debe tener instalado el paquete readxl en la consola, luego se llama a esta con library(readxl). Luego buscamos la ruta de nuestro archivo por medio de file.choose() y la asignamos a una variable (para este caso ‘ruta_excel’) y si queremos ver cuáles son los nombres de las hojas de nuestro documento de Excel utilizamos excel_sheets(). Una vez hecho esto podemos desechar o poner como comentario file.choose(). Para leer dicha base de datos haremos uso de la función read_excel().
+
+### Importando librería
+
+```{r importando}
+library(readxl)
+
+# file.choose()
+
+ruta_excel = "calefacción.xlsx"
+excel_sheets(ruta_excel)
+```
+
+### Leyendo la base de datos
+```{r data}
+data = read_excel(ruta_excel, sheet="Hoja1")
+data = as.data.frame(data)
+data
+```
+
+3. Para llevar a cabo la regresión múltiple utilizamos la funcion lm() escribiendo primero la variable dependiente y luego las independientes colocando en medio el símbolo “~" (podríamos definir previamente las variables con otros nombres o colocar sus nombre originales). Si queremos extraer los coeficientes (pendientes e intercepto) escribimos ‘$coefficients’ al lado del nombre del modelo que se dio a la regresión.
+
+### Modelo de regresion múltiple
+```{r modelo} 
+modelo = lm(formula=Costo ~ Temperatura + 
+              Aislamiento + 
+              Antigüedad, 
+            data=data)
+
+modelo$coefficients
+```
+
+Podemos escribir la ecuación de regresión múltiple de acuerdo a los coeficientes obtenidos.
+
+### Escribiendo la ecuacion
+
+####   Costo = 427.19 - 4.58Temperatura - 14.83Aislamiento + 6.10 Antigüedad
+
+5. La función summary() nos permite obtener los resultados del estadístico F para la prueba global y los estadístico t para las pruebas individuales. 
+
+Para la prueba global, si el p-valor es menor a 0.05, se debe rechazar la hipótesis nula Ho de que todos los coeficientes de la regresión son ceros y en caso contrario aceptar Ho. 
+
+Asimismo, para la prueba individual, si el p-valor asociado a un coeficiente es menor a 0.05, se debe rechazar la hipótesis nula Ha de que el coeficiente de la regresión es cero y en caso contrario aceptar Ho.
+
+### Prueba global e individual para los coeficientes
+
+### Prueba global 
+
+Ho: Beta1 = Beta2 = ... = Betak = 0
+
+Ha: Al menos dos Betas son != 0
+
+```{r }
+res = summary(modelo)
+res
+```
+Antigüedad 
+t_prueba = 1.521
+pvalue = 0.14786 > 0.05 => aceptamos la Ho de que Antigüedad = 0
+
+Conclusión: p-value = 6.562e-06 < 0.05. Por tanto, al 5% de significancia estadística, se rechaza la Ho de que todos los Betas son iguales a 0; es decir, al menos uno de ellos es diferente de cero.
+
+```{r}
+f_cri = qf(p = 0.95, df1 = 3, df2 = 20-(3+1))
+cat('\nf_cri =', f_cri)
+```
+Conclusión: Considerando los valores del estadístico f, vemos que f > f_cri. Por tanto, al 5% de significancia estadística, se rechaza la Ho de que todos los Betas son iguales a 0; es decir, al menos uno de ellos es diferente de cero.
+
+6. Para encontrar los intervalos de confianza para el intercepto y los parámetros del modelo de regresión múltiple poblacional, usamos la función confint(), ingresando como parámetros el modelo y el nivel de confianza. Si alguno de los intervalos contiene al cero (0), este no es significativo para el modelo y por tanto se puede excluir del mismo.
+
+### Intervalos de confianza para los parámetros
+
+```{r intervalos}
+confint(modelo, level=0.95)
+```
+
+7. De acuerdo al análisis anterior, se debe excluir del modelo a la variable “Antiguedad”. Volvemos a generar un nuevo modelo de regresión múltiple sin esta variable y analizamos los resultados de la prueba global y las pruebas individuales para los coeficientes. En caso se cumplan las hipótesis anteriores, significa que nuestro modelo es válido y podemos utilizarlo para realizar predicciones.
+
+### Nuevo modelo de regresion múltiple
+
+```{r nuevo modelo}
+modelo1 = lm(formula=Costo ~
+               Temperatura 
+             + Aislamiento, 
+             data=data)
+
+summary(modelo1)
+```
+Para Temperatura:
+Ho: Temperatura = 0
+
+Ha: Temperatura <> 0
+
+t_prueba = -7.337
+pvalue = 1.16e-06 < 0.05 => rechazamos la Ho de que Temperatura = 0 
+
+```{r}
+# qt(p = 0.95, df = 17, lower.tail = T)
+pt(q = 11.040, df = 17, lower.tail = F) * 2
+pt(q = -7.337, df = 17, lower.tail = T) * 2
+```
+
+
+Podemos escribir la nueva ecuación de regresión múltiple de acuerdo a los coeficientes obtenidos.
+
+### Escribiendo la nueva ecuacion
+
+####     Costo = 490.29 - 5.15Temperatura - 14.72Aislamiento
+
+Si queremos hacer una predicción a partir de la nueva ecuación de regresión múltiple, asignamos un valor a cada variable independiente y aplicamos la función predict() que tiene como parámetros el modelo y el valor de las variables independientes. 
+
+Por ejemplo, queremos estimar el costo de calefacción para una casa, cuya temperatura externa media del mes es de 30 grados (Temperatura=30) y hay 5 pulgadas de aislamiento en el ático (Aislamiento=5). 
+
+Se puede hacer una serie de predicciones utilizando la función seq() en una de las variables independientes manteniendo constantes a las otras y siguiendo un proceso similar al caso anterior.
+
+### Cálculo de predicciones
+
+```{r predicciones}
+predictores = data.frame(Temperatura=30, Aislamiento=5)
+predictores
+costo_est = predict(modelo1, predictores)
+costo_est
+```
+
+```{r}
+predictores = data.frame(Temperatura = seq(30, 40, 1),
+                         Aislamiento=5)
+predictores
+costo_est = data.frame( prediccion=predict(modelo1, predictores))
+costo_est
+```
+
+

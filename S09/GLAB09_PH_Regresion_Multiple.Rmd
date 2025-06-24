@@ -1,0 +1,184 @@
+---
+title: "GLAB09_PH_Regresion_Multiple"
+author: "EFN"
+date: "2023-04-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## SEMANA 9: PRUEBAS DE HIPOTESIS PARA MODELO MULTILINEAL
+
+### GUIA DE LABORATORIO
+Revise junto con el docente el ejemplo de aplicación para que luego pueda resolver el caso de aplicación propuesto.
+
+### EJEMPLO DE APLICACIÓN
+1. Primero creamos un archivo R Markdown, colocando un título y autor que irán en la cabecera.
+
+2. Procederemos a leer la base de datos llamada “calefacción”, que contiene información sobre el costo de calefacción (en dólares) el cual se quiere predecir con base a la temperatura exterior diaria media (en °F), el número de pulgadas de aislamiento en el ático y la antiguedad en años del calentador para un grupo de casas puestas en venta en una ciudad de Estados Unidos. 
+
+Se trabajará con un documento de Excel. Para ello se debe tener instalado el paquete ‘readxl’ en la consola, luego se llama a esta con library(readxl). Luego buscamos la ruta de nuestro archivo por medio de file.choose() y la asignamos a una variable (para este caso ‘ruta_excel’) y si queremos ver cuáles son los nombres de las hojas de nuestro documento de Excel utilizamos excel_sheets(). Una vez hecho esto podemos desechar o poner como comentario ‘file.choose()'. Para leer dicha base de datos haremos uso de la función read_excel().
+
+### Importacion de librería
+```{r importando}
+library(readxl)
+# file.choose()
+ruta_excel = "calefacción.xlsx"
+
+excel_sheets(ruta_excel)
+```
+### Leyendo la base de datos
+```{r data}
+data = read_excel(ruta_excel, sheet="Hoja1")
+data = data[-1]
+data = as.data.frame(data)
+data
+```
+
+3. Podemos calcular algunas medidas descriptivas con la función summary().
+
+### Medidas descriptivas
+
+```{r descriptivos}
+summary(data)
+```
+
+4. Para llevar a cabo la regresión múltiple utilizamos la función lm() escribiendo primero la variable dependiente y luego las independientes colocando en medio el simbolo ~ (podríamos definir previamente las variables con otros nombres o colocar sus nombre originales). Para ver un resumen del modelo usamos la función summary() y si queremos extraer los coeficientes (pendientes e intercepto) escribimos “$coefficients” al lado del nombre del modelo que se dio a la regresión.
+
+### Ajuste del Modelo de regresión múltiple
+```{r}
+modelo = lm(formula=Costo ~ Temperatura + Aislamiento + Antigüedad, data=data)
+summary(modelo)
+modelo$coefficients
+```
+### la ecuación de regresion lineal
+
+5. Podemos escribir la ecuación de regresión múltiple de acuerdo a los coeficientes obtenidos.
+
+#### costo = 427.19 - 4.58Temperatura - 14.83Aislamiento + 6.10Antigüedad
+
+```{r}
+res = summary(modelo)
+res$coefficients
+```
+
+#### Calculo del pvalue nanualmente
+
+```{r}
+(t_crit = qt(0.95, df = 20-2))
+
+interc = abs(res$coefficients[1,3])
+temper = abs(res$coefficients[2,3])
+aislam = abs(res$coefficients[3,3])
+antigu = abs(res$coefficients[4,3])
+
+(1-pt(interc, df = 20-4) ) * 2 # OK
+(1-pt(temper, df = 20-4) ) * 2
+(1-pt(aislam, df = 20-4) ) * 2
+(1-pt(antigu, df = 20-4) ) * 2
+```
+
+6. Para probar la linealidad entre las variables haremos uso de la función cor.test() que se basa en el estadístico t. Si el p-valor es menor a 0.05, se debe rechazar la hipótesis nula Ho, de que no existe correlación lineal entre Xs e Y. En caso contrario aceptar Ho. Los diagramas de dispersión los podemos hacer con la función ‘ggpairs() del paquete “GGally”.
+
+### Linealidad
+
+```{r prueba t, message=FALSE, warning=FALSE}
+cor.test(data$Costo, data$Temperatura)
+```
+𝐻0: ρ=0 (No existe correlación entre Costo y Temperatura)
+
+𝐻1: ρ≠0 (Existe correlación; lo que se espera)
+
+p-value = 1.407e-05 < 0.05. Entonces, al 5% de significancia estadistica se rechaza la Ho de que No existe correlacion entre Costo y Temperatura. Es decir, se acepta la hipotesis alternativa H1 de que existe correlacion.
+
+```{r}
+cor.test(data$Costo, data$Aislamiento)
+```
+
+𝐻0: ρ=0 (No existe correlación entre Costo y Aislamiento)
+
+𝐻1: ρ≠0 (Existe correlación; lo que se espera)
+
+p-value = p-value = 0.2738 > 0.05. Entonces, al 5% de significancia estadistica NO se rechaza la Ho de que No existe correlacion entre Costo y Aislamiento Es decir, se acepta la hipotesis nula Ho de que NO existe correlacion.
+
+```{r}
+cor.test(data$Costo, data$Antigüedad)
+```
+
+𝐻0: ρ=0 (No existe correlación entre Costo y Antigüedad)
+
+𝐻1: ρ≠0 (Existe correlación;  lo que se espera)
+
+p-value = 0.01469 < 0.05. Entonces, al 5% de significancia estadistica se rechaza la Ho de que No existe correlacion entre Costo y Antiguedad. Es decir, se acepta la hipotesis alternativa H1 de que existe correlacion.
+
+```{r message=FALSE, warning=FALSE}
+library(GGally)
+
+ggpairs(data, lower=list (continuous="smooth"),
+diag=list (continuous="barDiag"), axisLabe1s="none")
+```
+
+### Independencia
+7. Si queremos probar la independencia entre los errores hacemos uso de la función dwtest() que se basa en el estadístico Durbin-Watson. Previo a ellos debemos instalar el paquete lmtest. Si el p-valor (p-value) es menor a 0.05, se debe rechazar la hipótesis nula Ho, de que no existe autocorrelación entre los residuos, y en caso contrario aceptar Ho. 
+
+```{r prueba Durbin-watson, message=FALSE, warning=FALSE}
+library(lmtest)
+
+dwtest(modelo)
+```
+𝐻0: No existe autocorrelación entre los residuos (lo que se espera)
+
+𝐻1: Si existe autocorrelación entre los residuos
+
+p-value = 0.1625 > 0.05. Entonces, al 5% de significancia estadistica, NO se rechaza la hipotesis nula Ho, de que No existe autocorrelacion. Es decir, NO existe autocorrelacion entre los residuos.
+
+El gráfico de residuos vs. orden lo hacemos con la función plot() colocando como parámetros los residuos.
+
+```{r}
+plot(modelo$residuals)
+```
+
+### Normalidad
+
+8. Si queremos probar la normalidad de los residuos hacemos uso de la función shapiro.test() que se basa en el estadistico Shapiro-Wilk sobre los residuos. Si el p-valor (p-value) es menor a 0.05, se debe rechazar la hipótesis nula Ho de que los residuos se distribuyen normalmente, y en caso contrario aceptar Ho.
+
+```{r prueba shapiro-wilk}
+shapiro.test(modelo$residuals)
+```
+𝐻0: Los residuos se distribuyen normalmente (lo que se espera)
+
+𝐻1: Los residuos no se distribuyen normalmente
+
+p-value = 0.843 > 0.05. Entonces, al 5% de significancia estadistica, NO se rechaza la hipotesis nula Ho, de que os residuos se distribuyen normalmente. Es decir, os residuos siguen una distribuyen normal.
+
+Podemos hacer un gráfico Q-Q para ver si están alrededor de la recta.
+
+```{r}
+plot(modelo, 2)
+```
+
+### Varianza constante
+
+9. Por último, para probar la varianza constante (homocedasticidad) de los residuos hacemos uso de la función bptest() que se basa en el estadístico Breusch-Pagan sobre los residuos. Previo a ellos debemos instalar el paquete lmtest en caso de no tenerlo.
+
+Si el p-valor (p-value) es menor a 0.05, se debe rechazar la hipótesis nula Ho, de que los residuos tienen varianza constante, y en caso contrario aceptar Ho. 
+
+```{r prueba Breusch-Pagan}
+library(lmtest)
+
+bptest(modelo)
+```
+𝐻0: Los residuos tienen varianza constante (Lo que se espera de un buen modelo)
+
+𝐻1: Los residuos no tienen varianza constante
+
+p-value = 0.5207 > 0.05. Entonces, al 5% de significancia estadistica, NO se rechaza la hipotesis nula Ho, de que los residuos tienen varianza constante. 
+
+Tambien Podemos hacer un gráfico de los residuos vs. los valores ajustados por medio de la función plot().
+```{r}
+plot(modelo, 1)
+```
+
+En este grafico se espera que los residuos sean aleatoriamente positivos y negativos alrededor de cero, sin evidenciar un patron demasiado notorio.

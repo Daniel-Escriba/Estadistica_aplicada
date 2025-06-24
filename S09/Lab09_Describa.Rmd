@@ -1,0 +1,138 @@
+---
+title: "Lab09: PRUEBAS DE HIPÓTESIS PARA MODELO MULTILINEAL"
+author: "Daniel Escriba Flores"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 3
+  html_document: 
+    toc: true
+    theme: united
+    toc_depth: 3
+    
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Contexto:
+
+El Times-Observer es un periódico en la ciudad Metro. Al igual que muchos periódicos en la ciudad, el Times-Observer pasa por dificultades financieras. La gerente de circulación estudia otros periódicos en ciudades similares en Estados Unidos y Canadá, con interés particular en las variables que se relacionan con el número de suscriptores. Esta reúne la informacion muestral de 25 periódicos en ciudades similares empleando la siguiente notación:
+
+• Suscriptores : Número de suscriptores (en miles)
+• Población : Población metropolitana (en miles)
+• Presupuesto : Presupuesto en publicidad del periódico (en miles de dólares)
+• Ingreso : Ingreso familiar medio en el área metropolitana (en miles de dólares)
+
+Deseando predecir el número de suscriptores con base a las otras variables, haga lo siguiente:
+
+---
+
+# Pregunta A: Datos, Regresion Multiple y Ecuacion
+
+a. Lea la base de datos y haga un análisis de regresión múltiple. Además, escriba la ecuación de regresión.
+
+## Lectura de datos
+
+```{r Importando datos , warning=FALSE }
+library(readxl)
+library(pander)
+library(equatiomatic)
+
+data = read_excel("periódicos.xlsx", sheet="Hoja1")
+data = data[-1]
+data = as.data.frame(data)
+
+# Usar pander para formatear la tabla
+pander(data, caption = "Tabla de datos de suscripciones a periodicos de USA y Canada")
+```
+
+## Regresion Multiple
+
+```{r}
+modelo = lm(formula = Suscriptores ~ Población +
+              Presupuesto + 
+              Ingreso, 
+            data= data)
+
+summary(modelo)
+
+modelo$coefficients
+```
+
+## Ecuacion de Regresion
+
+
+```{r, echo=FALSE}
+cat("Ecuación de regresión:\n")
+cat("Suscriptores =", coef(modelo)[1], "+", coef(modelo)[2], "* Población +", 
+    coef(modelo)[3], "* Presupuesto +", coef(modelo)[4], "* Ingreso\n")
+```
+
+```{r}
+# Versión básica
+extract_eq(modelo)
+
+# Versión con valores de coeficientes
+extract_eq(modelo, use_coefs = TRUE)
+
+```
+
+# Pregunta B: Linealidad e independecia
+
+b. Verifique los supuestos de linealidad e independencia y diga si se aceptan o rechazan las
+hipótesis nula 𝐻0.
+
+## Linealidad 
+
+```{r prueba t, message=FALSE, warning=FALSE}
+cor.test(data$Suscriptores, data$Población)
+```
+### Interpretacion 
+
+- El valor de p-valor = 0.0005271 es menor a 0.05 , por lo tanto, se rechaza la hipótesis nula (Ho) . Esto indica que existe una correlación lineal estadísticamente significativa entre la variable Suscriptores y Población .
+
+El coeficiente de correlación es 0.643 , lo que sugiere una relación positiva moderada a fuerte entre ambas variables.
+
+## Independencia
+
+```{r prueba Durbin-watson, message=FALSE, warning=FALSE}
+library(lmtest)
+
+dwtest(modelo)
+```
+
+### Interpretacion
+
+El p-valor = 0.7468 es mayor a 0.05 , por lo tanto, no se rechaza la hipótesis nula (Ho) . Esto indica que no existe autocorrelación significativa entre los residuos del modelo. Los errores son independientes, lo cual cumple con el supuesto de independencia en regresión lineal.
+
+# Pregunta C: Normalidad y Homocedasticidad
+
+c. Verifique los supuestos de normalidad y homocedasticidad y diga si se aceptan o rechazan las
+hipótesis nula 𝐻0.
+
+
+## Normalidad
+
+```{r prueba shapiro-wilk}
+shapiro.test(modelo$residuals)
+```
+
+### Interpretacion
+
+El p-valor = 0.964 es mayor a 0.05 , por lo tanto, no se rechaza la hipótesis nula (Ho) . Esto indica que los residuos siguen una distribución normal , cumpliendo así con el supuesto de normalidad en el modelo de regresión.
+
+
+## Homocedasticidad
+
+```{r prueba Breusch-Pagan}
+library(lmtest)
+
+bptest(modelo)
+```
+
+### Interpretacion
+
+El p-valor = 0.3327 es mayor a 0.05 , por lo tanto, no se rechaza la hipótesis nula (Ho) . Esto indica que los residuos tienen varianza constante , es decir, se cumple el supuesto de homocedasticidad en el modelo de regresión.

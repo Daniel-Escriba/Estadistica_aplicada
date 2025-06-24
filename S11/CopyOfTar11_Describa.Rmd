@@ -1,0 +1,104 @@
+---
+title: 'SEMANA 11: MODELOS DE REGRESIÓN NO LINEAL'
+author: "Daniel Escriba Flores"
+date: "2025-05-28"
+output:
+  beamer_presentation: default
+  ioslides_presentation: default
+  slidy_presentation: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Caso Practico - Datos de población de un barrio en un período de 20 años 
+
+  En la siguiente tabla aparecen los datos de población de un pequeño barrio de una ciudad en un período de 20 años. Un ingeniero debe pronosticar la población que habrá dentro de 5 años para poder anticipar la demanda de energía. Analice qué modelo se adapta mejor y luego aplique regresión lineal.
+
+```{r Data, warning=FALSE,echo=FALSE,message=FALSE}
+
+library(readxl)
+library(pander)
+library(equatiomatic)
+
+```
+
+```{r, data}
+
+data = read_excel("Tar_Describa.xlsx", sheet="Datos")
+data = as.data.frame(data)
+
+# Usar pander para formatear la tabla
+
+pander(data, caption = "Tabla de datos",
+       justify = "center",  # Centrar todo el contenido
+       col.names = c("Tiempo (años)", "Población (habitantes)"))
+```
+
+--- 
+
+## A.	Haga la representación gráfica en R, usando plot().
+
+```{r, visualizacion inicial}
+
+plot(data$T, data$P, main = "Crecimiento de la Población", type = "b",
+     xlab = "Años (T)", ylab = "Población (P)", pch = 19, col = "blue",lwd=2)
+
+
+```
+
+## B.	Transforme las variables, como se muestra en el video y ajuste el modelo lineal simple con las variables transformadas.
+
+```{r,Transformación logarítmica y ajuste del modelo }
+
+data$log_P <- log(data$P)  # Transformación logarítmica
+
+pander(data , caption = "Tabla de datos con tranformacion",justify = "center")
+```
+
+
+```{r}
+modelo_transformado <- lm(log_P ~ T, data = data)
+summary(modelo_transformado)
+```
+
+## c.	Escriba la ecuación de regresión simple con las variables transformadas.
+
+```{r}
+# Versión básica
+extract_eq(modelo_transformado)
+```
+
+```{r}
+# Versión con valores de coeficientes
+extract_eq(modelo_transformado, use_coefs = TRUE, coef_digits = 5)
+
+```
+
+## d.	Escriba la ecuación de regresión original con las variables no transformadas.
+
+```{r, Ecuación exponencial}
+
+a <- round(exp(coef(modelo_transformado)[1]), 2)
+b <- round(coef(modelo_transformado)[2], 4)
+exp_eq <- paste0("$$\n\\widehat{P} = ", a, " \\cdot e^{", b, "T}\n$$")
+
+cat("**Modelo exponencial:**\n",exp_eq)
+
+```
+$$\widehat{P} = 100.04 \cdot e^{0.15T}$$
+
+
+
+## e. Pronosticar la población en el año 25.
+
+```{r}
+# Predicción para 25 años
+nuevo_T <- data.frame(T = 25)
+prediccion_log <- predict(modelo_transformado, nuevo_T)
+prediccion_P <- exp(prediccion_log)
+
+cat("La población predicha para T = 25 años es:", round(prediccion_P, 0))
+```
+

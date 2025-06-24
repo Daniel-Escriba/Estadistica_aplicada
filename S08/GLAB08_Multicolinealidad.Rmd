@@ -1,0 +1,127 @@
+---
+title: "GLAB08_Multicolinealidad"
+author: "EFN"
+date: "2023-04-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## SEMANA 8: MATRIZ DE CORRELACIONES. MULTICOLINEALIDAD
+### GUIA DE LABORATORIO
+
+Revise junto con el docente el ejemplo de aplicación para que luego pueda resolver el caso de aplicación propuesto.
+
+### EJEMPLO DE APLICACIÓN
+1. Primero creamos un archivo R Markdown, colocando un título y autor que irán en la cabecera.
+
+2. Procederemos a leer la base de datos llamada autopartes, que contiene información sobre las ventas anuales (en millones de dólares) de un distribuidor de autopartes, ventas que se quiere predecir con base al número de tiendas que aplican descuentos, el número de automóviles registrados, el ingreso total personal (en miles de millones de dólares), la antiguedad de los automóviles (en años) y el número de supervisores por local. 
+
+Se trabajará con un documento de Excel. Para ello se debe tener instalado el paquete readx! en la consola, luego se llama a esta con library(readxl). Luego buscamos la ruta de nuestro archivo por medio de file.choose() y la
+asignamos a una variable (para este caso ruta_excel) y si queremos ver cuáles son los nombres de las hojas de nuestro documento de Excel utilizamos excel_sheets(). Una vez hecho esto podemos desechar o poner como comentario file.choose(). Para leer dicha base de datos haremos uso de la función read_excel().
+
+## Importando librería
+
+```{r importando}
+library(readxl)
+
+#file.choose()
+ruta_excel = "autopartes.xlsx"
+excel_sheets(ruta_excel)
+```
+
+## Leyendo la base de datos
+
+```{r data}
+data = read_excel(ruta_excel, sheet="Hoja1")
+data = as.data.frame(data)
+data
+```
+
+3. Podemos calcular algunas medidas descriptivas con la función summary().
+
+### Medidas descriptivas
+```{r descriptivos}
+summary(data)
+```
+
+4. Para llevar a cabo la regresión múltiple utilizamos la función lm() escribiendo primero la variable dependiente y luego las independientes colocando en medio el simbolo ~ (podríamos definir previamente las variables con otros nombres o colocar sus nombre originales). Para ver un resumen del modelo usamos la función summary() y si queremos extraer los coeficientes (pendientes e intercepto) escribimos $coefficients al lado del nombre del modelo que se dio a la regresión.
+
+## Modelo de regresión múltiple
+
+```{r}
+modelo = lm(formula= Ventas ~ Tiendas + Automoviles + Ingreso + Antigüedad +
+Supervisores, data=data)
+
+summary(modelo)
+```
+
+```{r}
+modelo$coefficients
+```
+
+5. Con los resultados obtenidos podemos escribir la ecuación obtenida.
+
+## Escribiendo la ecuación
+
+#### ventas = -1.9672 - 0.006Tiendas + 1.7399Automoviles + 0.4099Ingreso + 2.0357Antigúedad - 0.0344supervisores
+
+6. Crearemos la matriz de correlaciones por medio de la función cor(), pero previamente eliminaremos la variable dependiente de la data original la cual se encuentra en la primera columna (data[-1]).
+
+## Matriz de correlaciones
+
+```{r correlaciones}
+data1 = data[-1]
+
+cor(data1, method="pearson")
+```
+
+7. Para hacer una representación gráfica de la matriz de correlaciones podemos usar la función corPlot() que se encuentra dentro del paquete psych el cual debemos instalar previamente.
+
+```{r warning=FALSE}
+library(psych)
+
+corPlot(data1, cex = 1.2, main="Matriz de correlaciones", )
+```
+
+8. A continuación, haremos un análisis de multicolinealidad. Utilizaremos la función vif() del paquete car (debe estar instalado) al cual le daremos como parámetro, nuestro modelo de regresión múltiple (modelo).
+
+## Multicolinealidad
+
+```{r multicolinealidad, message=FALSE, warning=FALSE}
+library(car)
+
+valores_VIF = vif(modelo)
+valores_VIF
+
+# VIF = 1 / (1-R2j)
+
+```
+
+Podemos interpretar los resultados obtenidos del VIF para cada variable independiente de manera gráfica. Nos valdremos de la función barplot() para hacer un gráfico de barras y colocando el valor límite de exclusión del modelo (VIF > 5) mediante la función abline().
+
+```{r}
+barplot(valores_VIF, main="valores VIF", horiz=F, ylim=c(0,15), col="steelblue")
+
+abline(h=5, lwd=3, lty=2)
+```
+
+Luego de revisar la condiciones, podemos eliminar la variable que posee el mayor valor del VIF y volvemos a generar un nuevo modelo de regresión múltiple para finalmente calcular el VIF de las nuevas variables independientes para el modelo.
+
+## Nuevo modelo de regresión múltiple
+
+```{r}
+modelo1 = lm(formula = Ventas ~ Automoviles + Ingreso + Antigüedad + Supervisores, data=data)
+
+summary(modelo1)
+modelo$coefficients
+
+library(car)
+valores_VIF = vif(modelo1)
+valores_VIF
+
+barplot(valores_VIF, main="valores VIF", horiz=F, ylim=c(0,6), col="steelblue")
+abline(h=5, lwd=3, lty=2)
+```

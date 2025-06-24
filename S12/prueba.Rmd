@@ -1,0 +1,64 @@
+---
+title: "Untitled"
+author: "Daniel Escriba Flores"
+date: "2025-06-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+bachillerato <- c(3.25, 1.80, 2.89, 3.81, 3.13, 2.81, 2.20, 2.14, 2.63)
+sat_verbal <- c(480, 290, 420, 500, 500, 430, 320, 530, 469)
+sat_matematicas <- c(410, 270, 410, 600, 490, 460, 490, 480, 440)
+promedio_programa <- c(3.21, 1.68, 3.58, 3.92, 3.00, 2.82, 1.65, 2.30, 2.33)
+
+# Crear data frame
+datos <- data.frame(bachillerato, sat_verbal, sat_matematicas, promedio_programa)
+
+# Ajustar modelo de regresión múltiple
+modelo <- lm(promedio_programa ~ bachillerato + sat_verbal + sat_matematicas, data = datos)
+
+# Estudiante nuevo con valores a predecir
+nuevo_estudiante <- data.frame(
+  bachillerato = 3.50,
+  sat_verbal = 450,
+  sat_matematicas = 570
+)
+
+# Predecir
+prediccion <- predict(modelo, newdata = nuevo_estudiante)
+
+# Mostrar resultado con dos decimales
+cat("Promedio estimado en el programa:", round(prediccion, 2), "\n")
+```
+
+```{r}
+
+library(car) 
+# Matriz de correlación entre variables independientes
+variables_indep <- data[, c("Bachillerato", "SAT_Verbal", "SAT_Matematicas")]
+cor_matrix <- cor(variables_indep)
+print("Matriz de correlación entre variables independientes:")
+print(round(cor_matrix, 4))
+
+# Factor de Inflación de Varianza (VIF)
+vif_values <- vif(modelo)
+print("\nFactor de Inflación de Varianza (VIF):")
+print(round(vif_values, 3))
+
+print("\nInterpretación VIF:")
+print("VIF < 5: No multicolinealidad problemática")
+print("VIF 5-10: Multicolinealidad moderada")
+print("VIF > 10: Multicolinealidad severa")
+
+# Verificar multicolinealidad
+max_vif <- max(vif_values)
+multicolinealidad <- ifelse(max_vif > 5, "DETECTADA", "NO DETECTADA")
+print(paste("Conclusión: Multicolinealidad", multicolinealidad))
+
+```
+

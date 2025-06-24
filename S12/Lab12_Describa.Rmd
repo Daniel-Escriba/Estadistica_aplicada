@@ -1,0 +1,202 @@
+---
+title: 'SEMANA 12: DIAGRAMA DE DISPERSIÓN. INTERPRETACIÓN'
+author: "Daniel Escriba Flores"
+date: "2025-06-09"
+output:
+  html_document:
+    toc: true
+    toc_depth: '3'
+    df_print: paged
+  prettydoc::html_pretty:
+    theme: leonids
+    toc: true
+    highlight: github
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 3
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Librerias, warning=FALSE,echo=FALSE,message=FALSE}
+
+library(readxl)
+library(pander)
+library(equatiomatic)
+
+```
+
+# Caso 1
+
+Supongamos que tenemos la intención de volvernos socios de una tienda de electrodomésticos; para estar seguros de la decisión, queremos estimar cómo será el crecimiento de los ingresos (en soles) para el próximo año. A continuación, se muestran los datos de los últimos años:
+
+
+```{r Tabla, echo=FALSE}
+
+library(readxl)
+
+data = read_excel("Lab12.xlsx", sheet="P1")
+data= as.data.frame(data)
+
+# Evitar notación científica
+options(scipen=999)
+
+pander(data, caption = "Tabla de datos",
+       justify = "center")
+```
+
+Con respecto a lo anterior, haga lo siguiente:
+
+## Pregunta A: Datos y Dispersion
+
+Lea la base de datos y elabore un diagrama de dispersión. Incluya diferentes parámetros para los colores, título del gráfico, nombre de los ejes, tipo de marca y tamaño.
+
+### Lectura de datos
+
+```{r Data}
+
+library(readxl)
+
+data = read_excel("Lab12.xlsx", sheet="P1")
+data= as.data.frame(data)
+data
+```
+
+### Diagrama con parametros 
+
+```{r diagrama, fig.height=6, fig.width=7}
+
+
+# Crear el diagrama de dispersión
+plot(data, 
+     pch=12,          # Tipo de marca: círculo sólido
+     col="blue",      # Color de las marcas
+     cex=1.5,         # Tamaño de las marcas
+     main="Gráfico de dispersión de ingresos anuales",  # Título del gráfico
+     xlab="Año",      # Nombre del eje X
+     ylab="Ingresos (soles)",  # Nombre del eje Y
+     col.main="darkgreen",  # Color del título
+     col.lab="darkblue",    # Color de los nombres de los ejes
+     col.axis="darkred")    # Color de los ejes
+
+```
+
+
+## Pregunta B: Grupos y Dispersion
+
+Separe los datos en dos grupos considerando a uno de ellos del año 2012 hacia adelante. Luego, elabore un diagrama de dispersión que muestre dichos grupos incluyendo diferentes parámetros gráficos.
+
+```{r}
+# Crear un factor para los grupos
+grupo <- as.factor(ifelse(data$Año < 2012, "Grupo 1", "Grupo 2"))
+
+# Definir colores para los grupos
+colores <- c("pink", "green")
+
+# Crear el diagrama de dispersión
+plot(data$Año, data$Ingresos, 
+     pch=as.numeric(grupo), 
+     col=colores[grupo], 
+     cex=1.5,
+     main="Gráfico de dispersión agrupado",
+     xlab="Año",
+     ylab="Ingresos (soles)")
+
+# Agregar leyenda
+legend("topleft", 
+       legend=c("Grupo 1", "Grupo 2"), 
+       pch=c(1, 2), 
+       col=colores,
+       cex=1.2)
+```
+
+---
+
+# Caso 2
+
+Un agrónomo diseñó un estudio en el que se cultivaron tomates utilizando seis cantidades distintas de fertilizante: 0, 20, 40, 60, 80 y 100 libras por cada 1000 pies cuadrados. Estos índices de aplicación de fertilizante se asignaron de manera aleatoria a parcelas de tierra que arrojaron la siguiente producción de tomate (en libras):
+
+```{r, echo=FALSE}
+
+library(readxl)
+
+data1 = read_excel("Lab12.xlsx", sheet="P2")
+data1= as.data.frame(data1)
+
+# Evitar notación científica
+options(scipen=999)
+
+pander(data1, caption = "Tabla de datos",
+       justify = "center")
+```
+
+Con respecto a lo anterior, haga lo siguiente:
+
+## Pregunta A: Datos y Dispersion
+
+Lea la base de datos y elabore un diagrama de dispersión. Incluya diferentes parámetros para los colores, título del gráfico, nombre de los ejes, tipo de marca y tamaño.
+
+### Lectura de datos
+
+```{r}
+
+library(readxl)
+
+data1 = read_excel("Lab12.xlsx", sheet="P2")
+data1= as.data.frame(data1)
+data1
+```
+
+### Diagrama con parametros 
+
+```{r, fig.height=6, fig.width=7}
+
+
+# Crear el diagrama de dispersión
+plot(data1, 
+     pch=25,          # Tipo de marca: círculo sólido
+     col="purple",      # Color de las marcas
+     cex=1.5,         # Tamaño de las marcas
+     main="Gráfico de dispersión de Redimiento",  # Título del gráfico
+     xlab=" Indice ",      # Nombre del eje X
+     ylab="Redimiento",  # Nombre del eje Y
+     col.main="orange",  # Color del título
+     col.lab="red",    # Color de los nombres de los ejes
+     col.axis="skyblue")    # Color de los ejes
+
+```
+
+
+## Pregunta B: Grupos y Dispersion
+
+Separe los datos en dos grupos considerando a uno de ellos con índice de aplicación de fertilizante de 60 hacia adelante. Luego, elabore un diagrama de dispersión que muestre dichos grupos incluyendo diferentes parámetros gráficos.
+
+```{r}
+# Crear un factor para los grupos
+grupo <- as.factor(ifelse(data1$Indice < 60, "Grupo 1", "Grupo 2"))
+
+# Definir colores para los grupos
+colores <- c("brown", "blue")
+
+# Crear el diagrama de dispersión
+plot(data1$Indice, data1$Rendimiento, 
+     pch=(as.numeric(grupo)), 
+     col=colores[grupo], 
+     cex=1.5,
+     main="Gráfico de dispersión agrupado",
+     xlab="Indice",
+     ylab="Redimiento")
+
+# Agregar leyenda
+legend("topleft", 
+       legend=c("Grupo 1", "Grupo 2"), 
+       pch=c(1, 2), 
+       col=colores,
+       cex=1.2)
+```
+
+---

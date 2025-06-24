@@ -24,17 +24,11 @@ Para ello se debe instalar el paquete ‘readxl’ desde la consola. Luego se ll
 ### Importando librería para archivos de Excel
 ```{r importando}
 library(readxl)
-#file.choose()
-#"C:\\Users\\User\\Downloads\\2023-1\\Estadistica_Aplicada\\Sesion06\\almacén.xls"
-
-ruta_excel = "almacén.xlsx"
-excel_sheets(ruta_excel)
-
-data = read_excel(ruta_excel, sheet="Hoja1")
-
-data = data[-1]
-data = as.data.frame(data)
-data
+data <- data.frame(
+  Compania = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
+  Tamaño = c(9.0, 94.4, 27.3, 179.2, 71.9, 97.9, 93.5, 70.0, 160.7, 96.5, 83.0, 23.5, 58.7, 93.8, 34.4),
+  Precio = c(10.8, 11.3, 11.2, 11.1, 11.1, 11.2, 11.0, 10.7, 11.3, 10.6, 10.5, 10.3, 10.7, 11.0, 10.8)
+)
 ```
 #### Leyendo la base de datos
 
@@ -55,8 +49,8 @@ data
 4. Vamos a realizar ahora un análisis de regresión lineal simple asignando a la variable independiente data$Ordenes y a la dependiente data$Costos. Luego,  utilizaremos la función lm() escribiendo primero la variable dependiente y después la independiente. 
 
 ```{r ecuación de regresión}
-x = data$Ordenes
-y = data$Costos
+x = data$Tamaño
+y = data$Precio
 
 modelo = lm(y ~ x)
 summary(modelo)
@@ -138,7 +132,7 @@ Haremos uso nuevamente de la función predict(), pero agregando dos nuevos pará
 # Nivel de confianza
 nc = 0.95
 
-nuevo = data.frame(x=3000) # ordenes = 3000
+nuevo = data.frame(x=100) # ordenes = 3000
 
 predict(object=modelo, newdata=nuevo, int="confidence", 
         level=nc)
@@ -149,7 +143,7 @@ predict(object=modelo, newdata=nuevo, int="confidence",
 Para el intervalo de predicción seguimos la secuencia anterior pero ahora con la opción ‘prediction’.
 
 ```{r}
-nuevo = data.frame(x=3000) # Ordenes = 3000
+nuevo = data.frame(x=100) # Ordenes = 3000
 
 predict(object=modelo, newdata=nuevo, interval="prediction",
         level=nc)
